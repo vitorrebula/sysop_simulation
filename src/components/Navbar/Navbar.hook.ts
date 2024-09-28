@@ -1,0 +1,20 @@
+import { MenuProps } from "antd";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+function useNavbar(){
+    const [current, setCurrent] = useState('addjobs');
+    const navigate = useNavigate();
+    
+    const onClick: MenuProps['onClick'] = (e) => {
+        setCurrent(e.key);
+        navigate(`/${e.key}`);
+    };
+
+    return{
+        onClick,
+        current
+    };
+}
+
+export default useNavbar;
