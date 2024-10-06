@@ -11,6 +11,7 @@ export function FixedUserGuideButton(props: FixedUserGuideButtonProps) {
 
     return (
         <FloatButton
+            badge={{dot: true}}
             icon={<FileTextOutlined />}
             tooltip={<div>Understand how to use Jobs Simulation</div>}
             onClick={() => setOpenUserGuide(true)}

@@ -4,18 +4,17 @@ import React, { useState } from "react";
 import { Job, JobsState } from "../../../types/jobs";
 
 export interface DataType extends Job {
-    key: React.Key;
 }
 
 export function useJobsTable(props: JobsState) {
     const { jobs, setJobs } = props;
     const [jobToDelete, setJobToDelete] = useState<Job | null>(null);
-    const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
 
     const handleDelete = () => {
         if(jobToDelete){
             const newJobs = jobs.filter(job => job.key !== jobToDelete.key);
             setJobs(newJobs);
+            setJobToDelete(null);
         }
     };
 
@@ -46,6 +45,13 @@ export function useJobsTable(props: JobsState) {
             },
         },
         {
+            title: 'Priority',
+            dataIndex: 'priority',
+            sorter: {
+                compare: (a, b) => a.priority - b.priority,
+            },
+        },
+        {
             title: 'Delete',
             key: 'delete',
             width: 80,
@@ -54,7 +60,6 @@ export function useJobsTable(props: JobsState) {
                     style={{ color: 'red', cursor: 'pointer' }}
                     onClick={() => {
                         setJobToDelete(record);
-                        setOpenDeleteModal(true);
                     }}
                 />
             ),
@@ -67,7 +72,5 @@ export function useJobsTable(props: JobsState) {
         jobToDelete,
         handleDelete,
         onCancelDelete,
-        setOpenDeleteModal,
-        openDeleteModal,
     };
 }

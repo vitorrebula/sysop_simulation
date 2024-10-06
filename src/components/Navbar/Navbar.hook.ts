@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function useNavbar(){
-    const [current, setCurrent] = useState('addjobs');
+    const [current, setCurrent] = useState('');
     const navigate = useNavigate();
     
     const onClick: MenuProps['onClick'] = (e) => {
