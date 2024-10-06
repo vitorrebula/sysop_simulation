@@ -4,9 +4,7 @@ export interface Job {
     key: React.Key;
     name: string;
     arrivalTime: number;
-    priority: number;
     burstTime: number;
-    age: number;
 }
 
 export interface JobsState {

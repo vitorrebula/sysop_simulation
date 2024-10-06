@@ -1,104 +1,142 @@
 import React, { useEffect, useState } from "react";
-import ReactECharts from "echarts-for-react"; // Supondo que você use a biblioteca ECharts para o gráfico
+import ReactECharts from "echarts-for-react";
 import { Job } from "../../../types/jobs";
 
 interface ResultsChartProps {
     jobs: Job[];
 }
 
+interface JobQueue {
+    startTime: number;
+    endTime: number;
+    job: Job;
+    waitingTime: number;
+}
+
 export function ResultsChart({ jobs }: ResultsChartProps) {
-    const [chartData, setChartData] = useState<any>({ series: [], xAxis: [] });
+    const [chartData, setChartData] = useState<any>({});
+    
+    const [jobQueue, setJobQueue] = useState<JobQueue[]>(
+        jobs.map(job => ({
+            startTime: 0,
+            endTime: 0,
+            waitingTime: 0,
+            job
+        }))
+    );
 
     useEffect(() => {
-        const { timeline, executedJobs } = scheduleJobs(jobs);
-        const formattedChartData = formatChartData(timeline, executedJobs);
-        setChartData(formattedChartData);
+        let totalTime = 0;
+        let currentTime = 0;
+        
+        const sortedJobs = [...jobQueue].sort((a, b) => a.job.arrivalTime - b.job.arrivalTime);
+        
+        const updatedQueue = sortedJobs.map(jobQ => {
+            if (jobQ.job.arrivalTime > currentTime) {
+                totalTime += jobQ.job.arrivalTime - currentTime; 
+                currentTime = jobQ.job.arrivalTime;
+            }
+
+            const startTime = currentTime;
+            const endTime = currentTime + jobQ.job.burstTime;
+            const waitingTime = startTime - jobQ.job.arrivalTime;
+
+            totalTime += jobQ.job.burstTime;
+            currentTime += jobQ.job.burstTime;
+
+            return { ...jobQ, startTime, endTime, waitingTime };
+        });
+
+        setJobQueue(updatedQueue);
+
     }, [jobs]);
 
-    function scheduleJobs(jobs: Job[]) {
-        const timeline: number[] = [];
-        const executedJobs: { [key: string]: number[] } = {};
-        let currentTime = 0;
-        const jobQueue: Job[] = [];
-        const waitingJobs: Job[] = [...jobs];
+    useEffect(() => {
+        const placeholderData = jobQueue.map(jobQ => jobQ.startTime);
+        const actualData = jobQueue.map(jobQ => jobQ.endTime - jobQ.startTime); 
 
-        waitingJobs.sort((a, b) => a.arrivalTime - b.arrivalTime);
-
-        while (waitingJobs.length > 0 || jobQueue.length > 0) {
-            while (waitingJobs.length > 0 && waitingJobs[0].arrivalTime <= currentTime) {
-                jobQueue.push(waitingJobs.shift()!);
-            }
-
-            jobQueue.sort((a, b) => a.priority - b.priority);
-
-            const currentJob = jobQueue.shift();
-            if (currentJob) {
-                currentJob.burstTime--;
-                timeline.push(currentTime);
-
-                if (!executedJobs[currentJob.name]) {
-                    executedJobs[currentJob.name] = [];
-                }
-                executedJobs[currentJob.name].push(1);
-
-                if (currentJob.burstTime > 0) {
-                    jobQueue.push(currentJob);
-                }
-            }
-
-            if (currentTime % 3 === 0) {
-                jobQueue.forEach(job => {
-                    job.priority += 1;
-                });
-            }
-
-            currentTime++;
-        }
-
-        return { timeline, executedJobs };
-    }
-
-    function formatChartData(timeline: number[], executedJobs: { [key: string]: number[] }) {
-        const seriesData = Object.keys(executedJobs).map(jobName => ({
-            name: jobName,
-            type: "bar",
-            stack: "total",
-            label: {
-                show: true
+        setChartData({
+            title: {
+                text: 'FIFO Job Scheduling Results'
             },
-            emphasis: {
-                focus: "series"
-            },
-            data: executedJobs[jobName]
-        }));
-
-        return {
             tooltip: {
-                trigger: "axis",
+                trigger: 'axis',
                 axisPointer: {
-                    type: "shadow"
+                    type: 'shadow'
+                },
+                formatter: function (params: { name: string; seriesName: string; value: number | string; dataIndex: number }[]) {
+                    const job = jobQueue[params[0].dataIndex]; 
+                
+                    if (!job || job.startTime === null || job.endTime === null) {
+                        return ''; 
+                    }
+                
+                    const startTime = job.startTime;
+                    const endTime = job.endTime;
+                    const waitingTime = job.waitingTime;
+                    const burstTime = job.job.burstTime;
+                
+                    return (
+                        `${job.job.name}<br/>` +
+                        `Start Time: ${startTime}<br/>` +
+                        `End Time: ${endTime}<br/>` +
+                        `Burst Time: ${burstTime}<br/>` + 
+                        `Waiting Time: ${waitingTime}`
+                    );
                 }
             },
-            legend: {},
+            legend: {
+                data: ['Job Execution']
+            },
             grid: {
-                left: "3%",
-                right: "4%",
-                bottom: "3%",
+                left: '5%',
+                right: '8%', 
+                bottom: '6%', 
                 containLabel: true
             },
             xAxis: {
-                type: "value",
-                data: timeline
+                type: 'value',
+                name: 'Time'
             },
             yAxis: {
-                type: "category",
-                data: ["Execution"]
+                name: 'Jobs',
+                type: 'category',
+                data: jobQueue.map(jobQ => jobQ.job.name)
             },
-            series: seriesData
-        };
-    }
+            series: [
+                {
+                    name: 'Placeholder',
+                    type: 'bar',
+                    stack: 'Total',
+                    silent: true,
+                    itemStyle: {
+                        borderColor: 'transparent',
+                        color: 'transparent'
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            borderColor: 'transparent',
+                            color: 'transparent'
+                        }
+                    },
+                    data: placeholderData 
+                },
+                {
+                    name: 'Job Execution',
+                    type: 'bar',
+                    stack: 'Total',
+                    label: {
+                        show: true,
+                        position: 'inside'
+                    },
+                    data: actualData 
+                }
+            ]
+        });
+    }, [jobQueue]);
 
-    return <ReactECharts style={{padding: '20px'}} option={chartData} />;
+
+    return <ReactECharts style={{ width: '100%'}} option={chartData} />;
 }
 
 export default ResultsChart;

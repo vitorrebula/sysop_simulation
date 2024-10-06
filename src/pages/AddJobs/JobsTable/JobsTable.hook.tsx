@@ -45,13 +45,6 @@ export function useJobsTable(props: JobsState) {
             },
         },
         {
-            title: 'Priority',
-            dataIndex: 'priority',
-            sorter: {
-                compare: (a, b) => a.priority - b.priority,
-            },
-        },
-        {
             title: 'Delete',
             key: 'delete',
             width: 80,
