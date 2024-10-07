@@ -9,7 +9,7 @@ import { FixedUserGuideButton } from "../../components/UserGuide/FixedUserGuideB
 import { UserGuide } from "../../components/UserGuide";
 
 export function Results(props: JobsState){
-    const {jobs, setJobs} = props;
+    const {jobs} = props;
     const [openUserGuide, setOpenUserGuide] = useState<boolean>(false);
 
     const navigate = useNavigate();
