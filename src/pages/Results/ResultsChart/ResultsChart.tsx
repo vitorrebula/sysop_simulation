@@ -98,7 +98,7 @@ export function ResultsChart({ jobs }: ResultsChartProps) {
                 }
             },
             legend: {
-                data: ['Job Execution']
+                show: false
             },
             grid: {
                 left: '5%',
