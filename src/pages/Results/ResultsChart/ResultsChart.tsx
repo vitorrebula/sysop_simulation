@@ -60,7 +60,8 @@ export function ResultsChart({ jobs }: ResultsChartProps) {
 
         setJobQueue(updatedQueue);
 
-    }, [jobs, jobQueue]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [jobs]);
 
     useEffect(() => {
         const placeholderData = jobQueue.map(jobQ => jobQ.startTime);
